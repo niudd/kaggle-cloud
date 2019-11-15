@@ -71,12 +71,12 @@ def run_check_net(train_dl, val_dl, multi_gpu=[0, 1], nonempty_only_loss=False):
     
     train_params = filter(lambda p: p.requires_grad, net.parameters())
     # 1x lr for encoder, 10x lr for other
-    enc_params = [p[1] for p in net.named_parameters() if ('encoder' in p[0])]
-    other_params = [p[1] for p in net.named_parameters() if ('encoder' not in p[0])]
-    train_params = [{'params': enc_params, 'lr': LearningRate},
-                    {'params': other_params, 'lr': LearningRate * 10}]
+#     enc_params = [p[1] for p in net.named_parameters() if ('encoder' in p[0])]
+#     other_params = [p[1] for p in net.named_parameters() if ('encoder' not in p[0])]
+#     train_params = [{'params': enc_params, 'lr': LearningRate},
+#                     {'params': other_params, 'lr': LearningRate * 10}]
     
-    optimizer = torch.optim.SGD(train_params, momentum=0.9, weight_decay=0.0001)#lr=LearningRate
+    optimizer = torch.optim.SGD(train_params, momentum=0.9, weight_decay=0.0001, lr=LearningRate)
     scheduler = LR_Scheduler('poly', LearningRate, NUM_EPOCHS, len(train_dl))#lr_scheduler=['poly', 'step', 'cos']
     #scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=NUM_EPOCHS, eta_min=MIN_LR, last_epoch=-1)
     
@@ -124,14 +124,14 @@ def run_check_net(train_dl, val_dl, multi_gpu=[0, 1], nonempty_only_loss=False):
             input_data = image.to(device=device, dtype=torch.float)
             truth = masks.to(device=device, dtype=torch.float)
             #set_trace()
-            logit = net(input_data)#[:, :3, :, :]
+            logit, logit_clf = net(input_data)#[:, :3, :, :]
             
             if multi_gpu is not None:
-                _train_loss  = net.module.criterion(logit, truth, nonempty_only_loss)
-                _train_metric  = net.module.metric(logit, truth, nonempty_only_loss)#device='gpu'
+                _train_loss  = net.module.criterion(logit, truth, nonempty_only_loss, logit_clf)
+                _train_metric  = net.module.metric(logit, truth, nonempty_only_loss, logit_clf)#device='gpu'
             else:
-                _train_loss  = net.criterion(logit, truth, nonempty_only_loss)
-                _train_metric  = net.metric(logit, truth, nonempty_only_loss)#device='gpu'
+                _train_loss  = net.criterion(logit, truth, nonempty_only_loss, logit_clf)
+                _train_metric  = net.metric(logit, truth, nonempty_only_loss, logit_clf)#device='gpu'
             train_loss_list.append(_train_loss.item())
             train_metric_list.append(_train_metric.item())#.detach()
 
@@ -153,14 +153,14 @@ def run_check_net(train_dl, val_dl, multi_gpu=[0, 1], nonempty_only_loss=False):
             for i, (image, masks) in enumerate(val_dl):
                 input_data = image.to(device=device, dtype=torch.float)
                 truth = masks.to(device=device, dtype=torch.float)
-                logit = net(input_data)
+                logit, logit_clf = net(input_data)
                 
                 if multi_gpu is not None:
-                    _val_loss  = net.module.criterion(logit, truth, nonempty_only_loss)
-                    _val_metric  = net.module.metric(logit, truth, nonempty_only_loss)#device='gpu'
+                    _val_loss  = net.module.criterion(logit, truth, nonempty_only_loss, logit_clf)
+                    _val_metric  = net.module.metric(logit, truth, nonempty_only_loss, logit_clf)#device='gpu'
                 else:
-                    _val_loss  = net.criterion(logit, truth, nonempty_only_loss)
-                    _val_metric  = net.metric(logit, truth, nonempty_only_loss)#device='gpu'
+                    _val_loss  = net.criterion(logit, truth, nonempty_only_loss, logit_clf)
+                    _val_metric  = net.metric(logit, truth, nonempty_only_loss, logit_clf)#device='gpu'
                 val_loss_list.append(_val_loss.item())
                 val_metric_list.append(_val_metric.item())#.detach()
 
@@ -253,13 +253,13 @@ LOG_PATH = '../logging/unet_%s_%dx%d_v1_seed%s.log'%(MODEL, IMG_SIZE[0], IMG_SIZ
 
 NUM_EPOCHS = 50
 early_stopping_round = 10 #500#50
-LearningRate = 0.002 #0.02
+LearningRate = 0.02 #0.02
 #MIN_LR = 0.005
 
 
 ######### Load data #########
 train_dl, val_dl = prepare_trainset(BATCH_SIZE, NUM_WORKERS, SEED, IMG_SIZE, debug, 
-                                    nonempty_only=False, crop=False)#True: Only using nonempty-mask!
+                                    nonempty_only=False, crop=False, output_shape=None)#True: Only using nonempty-mask!
 
 ######### Run the training process #########
 run_check_net(train_dl, val_dl, multi_gpu=multi_gpu, nonempty_only_loss=False)

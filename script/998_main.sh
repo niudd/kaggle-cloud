@@ -1,3 +1,5 @@
+../../anaconda3/bin/python3 106_pspnet.py --SEED=2034
+
 
 #../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2034
 # ../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2035

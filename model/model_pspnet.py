@@ -14,14 +14,14 @@ from loss.losses import dice_loss, FocalLoss, weighted_bce, soft_dice_loss
 from utils.metrics import iou_pytorch, dice
 
 
-class UNetResNet34(nn.Module):
+class PSPNet(nn.Module):
     def __init__(self, debug=False):
         super().__init__()
-        self.Unet = smp.Unet(encoder_name='resnet34', 
-                             encoder_weights='imagenet', 
-                             classes=4,
-                             activation=None,
-                             center=True)
+        self.PSPNet = smp.PSPNet(encoder_name='resnet34', 
+                                 encoder_weights='imagenet', 
+                                 classes=4, 
+                                 activation=None)
+        
         self.debug = debug
     
     def forward(self, x):
@@ -35,7 +35,7 @@ class UNetResNet34(nn.Module):
         if self.debug:
             print('input: ', x.size())
         
-        logit = self.Unet(x)
+        logit = self.PSPNet(x)
         if self.debug:
             print('logit: ', logit.size())
         

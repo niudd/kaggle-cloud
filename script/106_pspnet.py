@@ -19,7 +19,7 @@ from utils.utils import save_checkpoint, load_checkpoint, set_logger
 from utils.gpu_utils import set_n_get_device
 
 from dataset.dataset import prepare_trainset
-from model.model_resnet_fpn import FPNResNet34, predict_proba
+from model.model_pspnet import PSPNet, predict_proba
 from model.deeplab_model_kaggler.lr_scheduler import LR_Scheduler
 
 #from sync_batchnorm import convert_model
@@ -49,7 +49,7 @@ def run_check_net(train_dl, val_dl, multi_gpu=[0, 1], nonempty_only_loss=False):
     logging.info('\n\n')
     #---
     if MODEL == 'resnet34':
-        net = FPNResNet34(debug=False).cuda(device=device)
+        net = PSPNet(debug=False).cuda(device=device)
 
     #elif MODEL == 'RESNET18':
     #    net = AtlasResNet18(debug=False).cuda(device=device)
@@ -243,15 +243,15 @@ multi_gpu = [0,1,2,3]#use 2 gpus
 
 #SEED = 1234#5678#4567#3456#2345#1234
 debug = False # if True, load 100 samples, False
-IMG_SIZE = (1024, 1536) #(512, 768) #(1024, 1536)
+IMG_SIZE = (512, 768) #(1024, 1536)
 BATCH_SIZE = 16
 NUM_WORKERS = 24
 warm_start, last_checkpoint_path = False, 'checkpoint/%s_%s_v1_seed%s/best.pth.tar'%(MODEL, IMG_SIZE, SEED)
-checkpoint_path = '../checkpoint/fpn_%s_%dx%d_v1_seed%s'%(MODEL, IMG_SIZE[0], IMG_SIZE[1], SEED)
-LOG_PATH = '../logging/fpn_%s_%dx%d_v1_seed%s.log'%(MODEL, IMG_SIZE[0], IMG_SIZE[1], SEED)#
+checkpoint_path = '../checkpoint/pspnet_%s_%dx%d_v1_seed%s'%(MODEL, IMG_SIZE[0], IMG_SIZE[1], SEED)
+LOG_PATH = '../logging/pspnet_%s_%dx%d_v1_seed%s.log'%(MODEL, IMG_SIZE[0], IMG_SIZE[1], SEED)#
 #torch.cuda.manual_seed_all(SEED)
 
-NUM_EPOCHS = 40
+NUM_EPOCHS = 50
 early_stopping_round = 10 #500#50
 LearningRate = 0.02 #0.02
 #MIN_LR = 0.005
@@ -259,8 +259,8 @@ LearningRate = 0.02 #0.02
 
 ######### Load data #########
 train_dl, val_dl = prepare_trainset(BATCH_SIZE, NUM_WORKERS, SEED, IMG_SIZE, debug, 
-                                    nonempty_only=False, crop=False, output_shape=(512, 768))#(512, 768)
-#True: Only using nonempty-mask! #output_shape=None: input_shape=output_shape,
+                                    nonempty_only=False, crop=False, output_shape=None)#True: Only using nonempty-mask!
+
 ######### Run the training process #########
 run_check_net(train_dl, val_dl, multi_gpu=multi_gpu, nonempty_only_loss=False)
 

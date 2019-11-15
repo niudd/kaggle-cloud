@@ -1,13 +1,11 @@
-../../anaconda3/bin/python3 104_deeplabv3plus_with_clf.py --SEED=2047
-../../anaconda3/bin/python3 104_deeplabv3plus_with_clf.py --SEED=2048
-../../anaconda3/bin/python3 104_deeplabv3plus_with_clf.py --SEED=2049
-../../anaconda3/bin/python3 104_deeplabv3plus_with_clf.py --SEED=2050
-../../anaconda3/bin/python3 104_deeplabv3plus_with_clf.py --SEED=2051
+#../../anaconda3/bin/python3 103_resnet_unet.py --SEED=2062
+
+#../../anaconda3/bin/python3 104_deeplabv3plus_with_clf.py --SEED=2051
 
 
-# ../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2043
-# ../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2044
-# ../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2045
+../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2052
+../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2053
+
 
 #../../anaconda3/bin/python3 100_unet.py --SEED=2034
 
