@@ -243,7 +243,7 @@ multi_gpu = [0,1,2,3]#use 2 gpus
 
 #SEED = 1234#5678#4567#3456#2345#1234
 debug = False # if True, load 100 samples, False
-IMG_SIZE = (512, 768) #(1024, 1536)
+IMG_SIZE = (384, 576) #(512, 768)
 BATCH_SIZE = 16
 NUM_WORKERS = 24
 warm_start, last_checkpoint_path = False, 'checkpoint/%s_%s_v1_seed%s/best.pth.tar'%(MODEL, IMG_SIZE, SEED)

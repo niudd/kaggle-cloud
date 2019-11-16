@@ -15,10 +15,14 @@ from utils.metrics import iou_pytorch, dice
 
 
 class FPNResNet34(nn.Module):
-    def __init__(self, debug=False):
+    def __init__(self, debug=False, downscale=True):
         super().__init__()
+        if downscale:
+            final_upsampling=2
+        else:
+            final_upsampling=4
         self.FPN = smp.FPN(encoder_name='resnet34', encoder_weights='imagenet', 
-                           classes=4, activation=None, final_upsampling=2)#default final_upsampling=4
+                           classes=4, activation=None, final_upsampling=final_upsampling)#default final_upsampling=4
         self.debug = debug
     
     def forward(self, x):

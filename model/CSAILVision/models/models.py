@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torchvision
+import torch.nn.functional as F
 
 from .sync_batchnorm.batchnorm import SynchronizedBatchNorm2d
 BatchNorm2d = SynchronizedBatchNorm2d
@@ -66,7 +67,9 @@ class SegmentationModule(SegmentationModuleBase):
             (pred, pred_deepsup) = self.decoder(self.encoder(input, return_feature_maps=True))
         else:
             logit = self.decoder(self.encoder(input, return_feature_maps=True), output_shape=input.size()[2:])
-            return logit
+            #return logit
+            logit_clf = F.adaptive_max_pool2d(logit, 1).view(logit.size()[0], -1)
+            return logit, logit_clf
 
 #         loss = self.crit(pred, feed_dict['seg_label'])
 #         if self.deep_sup_scale is not None:
@@ -79,29 +82,41 @@ class SegmentationModule(SegmentationModuleBase):
 #         else:
 #             pred = self.decoder(self.encoder(input, return_feature_maps=True), segSize=segSize)
 #             return pred
-        
-        ##-----------------------------------------------------------------
 
-    def criterion(self, logit, truth):
-        """Define the (customized) loss function here."""        
+    ##-----------------------------------------------------------------
+
+    def criterion(self, logit, truth, nonempty_only=False, logit_clf=None):
+        """Define the (customized) loss function here.""" 
+        if logit_clf is not None:
+            Loss_FUNC_mask = nn.BCEWithLogitsLoss()
+            loss_mask = Loss_FUNC_mask(logit, truth)
+            #loss_mask = 0.5 * dice_loss(logit, truth) + 0.5 * Loss_FUNC_mask(logit, truth)
+
+#             p = torch.clamp(torch.sigmoid(logit_clf), 1e-9, 1-1e-9)
+#             t = (truth.sum(dim=[2,3])>0).float()
+#             loss_label = - t*torch.log(p) - 2*(1-t)*torch.log(1-p)
+#             loss_label = loss_label.mean()
+            
+            return loss_mask#0.5 * loss_mask + 0.5 * loss_label
+        
         Loss_FUNC = nn.BCEWithLogitsLoss()
-        #Loss_FUNC2 = FocalLoss(alpha=1, gamma=2, logits=True, reduce=True)
+        #Loss_FUNC = FocalLoss(alpha=1, gamma=2, logits=True, reduce=True)
         bce_loss = Loss_FUNC(logit, truth)
-        #focal_loss = Loss_FUNC2(logit, truth)
         #loss = Loss_FUNC(logit, truth)
         
         #loss = L.lovasz_hinge(logit, truth, ignore=None)#255
         #loss = L.symmetric_lovasz(logit, truth)
-        loss = 0.75 * dice_loss(logit, truth) + 0.25 * bce_loss
-        #loss = 0.33 * dice_loss(logit, truth) + 0.33 * bce_loss + 0.33 * focal_loss
+        loss = 0.5 * dice_loss(logit, truth) + 0.5 * bce_loss
+        #loss = 0.5 * soft_dice_loss(logit, truth, weight=[0.75, 0.25]) + 0.5 * bce_loss
+        #loss = 0.1* L.lovasz_hinge(logit, truth, ignore=None) + 0.9 * bce_loss
         #loss = dice_loss(logit, truth)
         #loss = weighted_bce(logit, truth)
         return loss
 
-    def metric(self, logit, truth):
+    def metric(self, logit, truth, nonempty_only=False, logit_clf=None):
         """Define metrics for evaluation especially for early stoppping."""
         #return iou_pytorch(logit, truth)
-        return dice(logit, truth)
+        return dice(logit, truth, nonempty_only=nonempty_only, logit_clf=logit_clf)
 
     def set_mode(self, mode):
         self.mode = mode

@@ -21,7 +21,7 @@ from utils.gpu_utils import set_n_get_device
 from dataset.dataset import prepare_trainset
 
 #from model.deeplab_model_kaggler.deeplab import DeepLab, predict_proba
-from model.EfficientUnet.efficient_unet import Efficient_Unet, predict_proba
+from model.model_efficientnet_unet import Efficient_Unet, predict_proba
 
 from model.deeplab_model_kaggler.lr_scheduler import LR_Scheduler
 
@@ -47,11 +47,11 @@ print('SEED=%d'%SEED)
 #print(parser.parse_args())
 
 ######### Define the training process #########
-def run_check_net(train_dl, val_dl, multi_gpu=[0, 1]):
+def run_check_net(train_dl, val_dl, multi_gpu, nonempty_only_loss):
     set_logger(LOG_PATH)
     logging.info('\n\n')
     #---
-    net = Efficient_Unet(num_class=4, drop_connect_rate=0.2).cuda(device=device)
+    net = Efficient_Unet(debug=False, model=MODEL).cuda(device=device)
 
 #     for param in net.named_parameters():
 #         if param[0][:8] in ['decoder5']:#'decoder5', 'decoder4', 'decoder3', 'decoder2'
@@ -98,6 +98,10 @@ def run_check_net(train_dl, val_dl, multi_gpu=[0, 1]):
     #np.random.seed(seed)
     
     for i_epoch in range(NUM_EPOCHS):
+        ### adjust learning rate
+        #scheduler.step(epoch=i_epoch)
+        #print('lr: %f'%scheduler.get_lr()[0])
+        
         t0 = time.time()
         # iterate through trainset
         if multi_gpu is not None:
@@ -116,19 +120,19 @@ def run_check_net(train_dl, val_dl, multi_gpu=[0, 1]):
             input_data = image.to(device=device, dtype=torch.float)
             truth = masks.to(device=device, dtype=torch.float)
             #set_trace()
-            logit = net(input_data)#[:, :3, :, :]
+            logit, logit_clf = net(input_data)#[:, :3, :, :]
             
             if multi_gpu is not None:
-                _train_loss  = net.module.criterion(logit, truth)
-                _train_metric  = net.module.metric(logit, truth)#device='gpu'
+                _train_loss  = net.module.criterion(logit, truth, nonempty_only_loss, logit_clf)
+                _train_metric  = net.module.metric(logit, truth, nonempty_only_loss, logit_clf)#device='gpu'
             else:
-                _train_loss  = net.criterion(logit, truth)
-                _train_metric  = net.metric(logit, truth)#device='gpu'
+                _train_loss  = net.criterion(logit, truth, nonempty_only_loss, logit_clf)
+                _train_metric  = net.metric(logit, truth, nonempty_only_loss, logit_clf)#device='gpu'
             train_loss_list.append(_train_loss.item())
             train_metric_list.append(_train_metric.item())#.detach()
 
             #grandient accumulation step=2
-            acc_step = 2
+            acc_step = 1
             _train_loss = _train_loss / acc_step
             _train_loss.backward()
             if (i+1)%acc_step==0:
@@ -145,14 +149,14 @@ def run_check_net(train_dl, val_dl, multi_gpu=[0, 1]):
             for i, (image, masks) in enumerate(val_dl):
                 input_data = image.to(device=device, dtype=torch.float)
                 truth = masks.to(device=device, dtype=torch.float)
-                logit = net(input_data)
+                logit, logit_clf = net(input_data)
                 
                 if multi_gpu is not None:
-                    _val_loss  = net.module.criterion(logit, truth)
-                    _val_metric  = net.module.metric(logit, truth)#device='gpu'
+                    _val_loss  = net.module.criterion(logit, truth, nonempty_only_loss, logit_clf)
+                    _val_metric  = net.module.metric(logit, truth, nonempty_only_loss, logit_clf)#device='gpu'
                 else:
-                    _val_loss  = net.criterion(logit, truth)
-                    _val_metric  = net.metric(logit, truth)#device='gpu'
+                    _val_loss  = net.criterion(logit, truth, nonempty_only_loss, logit_clf)
+                    _val_metric  = net.metric(logit, truth, nonempty_only_loss, logit_clf)#device='gpu'
                 val_loss_list.append(_val_loss.item())
                 val_metric_list.append(_val_metric.item())#.detach()
 
@@ -179,9 +183,9 @@ def run_check_net(train_dl, val_dl, multi_gpu=[0, 1]):
 
         # Adjust learning_rate
         #scheduler.step(val_metric)
-
+        
         #for 1024 trainging is harder, sometimes too early stop, force to at least train 40 epochs
-        if i_epoch>=30:#-1
+        if i_epoch>=-1:
             if val_metric > best_val_metric:
                 best_val_metric = val_metric
                 is_best = True
@@ -195,7 +199,7 @@ def run_check_net(train_dl, val_dl, multi_gpu=[0, 1]):
                     break
         else:
             is_best = False
-        
+
         #save checkpoint
         checkpoint_dict = \
         {
@@ -226,17 +230,17 @@ seed_everything(SEED)
 
 ######### Config the training process #########
 #device = set_n_get_device("0, 1, 2, 3", data_device_id="cuda:0")#0, 1, 2, 3, IMPORTANT: data_device_id is set to free gpu for storing the model, e.g."cuda:1"
-MODEL = 'b5' #'xception'#'resnet' #backbone for deeplab
+MODEL = 'b5' #'b3', 'b5'...
 #AUX_LOGITS = True#False, only for 'INCEPTION_V3'
 print('====MODEL ACHITECTURE: %s===='%MODEL)
 
-device = set_n_get_device("2,3", data_device_id="cuda:0")#0, 1, 2, 3, IMPORTANT: data_device_id is set to free gpu for storing the model, e.g."cuda:1"
-multi_gpu = [0, 1]#use 2 gpus
+device = set_n_get_device("0,1,2,3", data_device_id="cuda:0")#0, 1, 2, 3, IMPORTANT: data_device_id is set to free gpu for storing the model, e.g."cuda:1"
+multi_gpu = [0, 1, 2, 3]#use 2 gpus
 
 #SEED = 1234#5678#4567#3456#2345#1234
-debug = False # if True, load 100 samples, False
-IMG_SIZE = (512, 768) #(256,512) #(256,1600)
-BATCH_SIZE = 8 #4#16
+debug = True # if True, load 100 samples, False
+IMG_SIZE = (384, 576) #(512, 768)
+BATCH_SIZE = 16 #4#16
 NUM_WORKERS = 24
 warm_start, last_checkpoint_path = False, '../checkpoint/Efficient_Unet_b5_512x768_v1_seed1234/best.pth.tar'
 checkpoint_path = '../checkpoint/Efficient_Unet_%s_%dx%d_v1_seed%s'%(MODEL, IMG_SIZE[0], IMG_SIZE[1], SEED)
@@ -250,9 +254,9 @@ LearningRate = 0.02 #0.01
 
 ######### Load data #########
 train_dl, val_dl = prepare_trainset(BATCH_SIZE, NUM_WORKERS, SEED, IMG_SIZE, debug, 
-                                    nonempty_only=False, crop=False)#True: Only using nonempty-mask!
+                                    nonempty_only=False, crop=False, output_shape=None)#True: Only using nonempty-mask!
 
 ######### Run the training process #########
-run_check_net(train_dl, val_dl, multi_gpu=multi_gpu)
+run_check_net(train_dl, val_dl, multi_gpu=multi_gpu, nonempty_only_loss=False)
 
 print('------------------------\nComplete SEED=%d\n------------------------'%SEED)
