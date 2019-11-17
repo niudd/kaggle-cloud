@@ -189,7 +189,7 @@ def run_check_net(train_dl, val_dl, multi_gpu=[0, 1], nonempty_only_loss=False):
         #scheduler.step(val_metric)
         
         #for 1024 trainging is harder, sometimes too early stop, force to at least train 40 epochs
-        if i_epoch>=10:#-1
+        if i_epoch>=30:#-1
             if val_metric > best_val_metric:
                 best_val_metric = val_metric
                 is_best = True
@@ -243,7 +243,7 @@ multi_gpu = [0,1,2,3]#use 2 gpus
 
 #SEED = 1234#5678#4567#3456#2345#1234
 debug = False # if True, load 100 samples, False
-IMG_SIZE = (384, 576) #(512, 768) #(1024, 1536)
+IMG_SIZE = (512, 768) #(384, 576) #(512, 768) #(1024, 1536)
 BATCH_SIZE = 16
 NUM_WORKERS = 24
 warm_start, last_checkpoint_path = False, 'checkpoint/%s_%s_v1_seed%s/best.pth.tar'%(MODEL, IMG_SIZE, SEED)
@@ -251,7 +251,7 @@ checkpoint_path = '../checkpoint/pspnet_%s_%dx%d_v1_seed%s'%(MODEL, IMG_SIZE[0],
 LOG_PATH = '../logging/pspnet_%s_%dx%d_v1_seed%s.log'%(MODEL, IMG_SIZE[0], IMG_SIZE[1], SEED)#
 #torch.cuda.manual_seed_all(SEED)
 
-NUM_EPOCHS = 50
+NUM_EPOCHS = 80 #50
 early_stopping_round = 10 #500#50
 LearningRate = 0.02 #0.02
 #MIN_LR = 0.005

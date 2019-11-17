@@ -134,6 +134,7 @@ def predict_proba(net, test_dl, device, multi_gpu=False, mode='test', tta=True):
     else:
         print("not use TTA")
     y_pred = None
+    y_pred_clf = None
     if multi_gpu:
         net.module.set_mode('test')
     else:
@@ -142,29 +143,43 @@ def predict_proba(net, test_dl, device, multi_gpu=False, mode='test', tta=True):
         if mode=='valid':
             for i, (image, masks) in enumerate(test_dl):
                 input_data = image.to(device=device, dtype=torch.float)
-                logit = net(input_data).cpu().numpy()
+                logit, logit_clf = net(input_data)
+                logit = logit.cpu().numpy()
+                logit_clf = logit_clf.cpu().numpy()
                 if tta:#horizontal flip
                     input_data_flip = torch.flip(image, [3]).to(device=device, dtype=torch.float)
-                    logit_flip = net(input_data_flip).cpu().numpy()[:,:,:,::-1]#vertical: [:,:,::-1,:]
+                    logit_flip, logit_clf_flip = net(input_data_flip)
+                    logit_flip = logit_flip.cpu().numpy()[:,:,:,::-1]#vertical: [:,:,::-1,:]
+                    logit_clf_flip = logit_clf_flip.cpu().numpy()
                     logit = (logit + logit_flip) / 2
+                    logit_clf = (logit_clf + logit_clf_flip) / 2
                 if y_pred is None:
                     y_pred = logit
+                    y_pred_clf = logit_clf
                 else:
                     y_pred = np.concatenate([y_pred, logit], axis=0)
+                    y_pred_clf = np.concatenate([y_pred_clf, logit_clf], axis=0)
         elif mode=='test':
             for i, image in enumerate(test_dl):
                 input_data = image.to(device=device, dtype=torch.float)
-                logit = net(input_data).cpu().numpy()
+                logit, logit_clf = net(input_data)
+                logit = logit.cpu().numpy()
+                logit_clf = logit_clf.cpu().numpy()
                 if tta:#horizontal flip
                     input_data_flip = torch.flip(image, [3]).to(device=device, dtype=torch.float)
-                    logit_flip = net(input_data_flip).cpu().numpy()[:,:,:,::-1]
+                    logit_flip, logit_clf_flip = net(input_data_flip)
+                    logit_flip = logit_flip.cpu().numpy()[:,:,:,::-1]#vertical: [:,:,::-1,:]
+                    logit_clf_flip = logit_clf_flip.cpu().numpy()
                     logit = (logit + logit_flip) / 2
+                    logit_clf = (logit_clf + logit_clf_flip) / 2
                 if y_pred is None:
                     y_pred = logit
+                    y_pred_clf = logit_clf
                 else:
                     y_pred = np.concatenate([y_pred, logit], axis=0)
+                    y_pred_clf = np.concatenate([y_pred_clf, logit_clf], axis=0)
     h,w = y_pred.shape[2], y_pred.shape[3]
-    return y_pred.reshape(-1, 4, h, w)#Nx4x256x1600
+    return y_pred.reshape(-1, 4, h, w), y_pred_clf.reshape(-1, 4)
 
 
 class ModelBuilder:

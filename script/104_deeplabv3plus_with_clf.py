@@ -240,7 +240,7 @@ multi_gpu = [0,1,2,3]#use 2 gpus
 
 #SEED = 1234#5678#4567#3456#2345#1234
 debug = False # if True, load 100 samples, False
-IMG_SIZE = (512, 768) #(512, 768) #(768, 1152) #(1024, 1536)
+IMG_SIZE = (384, 576) #(512, 768) #(768, 1152) #(1024, 1536)
 BATCH_SIZE = 16 #8 #16
 NUM_WORKERS = 24
 warm_start, last_checkpoint_path = False, '../checkpoint/deeplabv3plus_resnet_512x768_v6_seed2001/best.pth.tar'
@@ -249,13 +249,13 @@ LOG_PATH = '../logging/deeplabv3plus_%s_%dx%d_v13_seed%s.log'%(MODEL, IMG_SIZE[0
 #torch.cuda.manual_seed_all(SEED)
 
 NUM_EPOCHS = 40
-early_stopping_round = 15 #10#500#50
+early_stopping_round = 10 #10#500#50
 LearningRate = 0.003 #0.001
 
 
 ######### Load data #########
 train_dl, val_dl = prepare_trainset(BATCH_SIZE, NUM_WORKERS, SEED, IMG_SIZE, debug, 
-                                    nonempty_only=False, crop=False)#True: Only using nonempty-mask!
+                                    nonempty_only=False, crop=False, output_shape=None)#True: Only using nonempty-mask!
 
 ######### Run the training process #########
 run_check_net(train_dl, val_dl, multi_gpu=multi_gpu, nonempty_only_loss=False)##only backward loss for nonempty-mask-channels

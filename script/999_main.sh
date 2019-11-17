@@ -1,16 +1,17 @@
-../../anaconda3/bin/python3 101_CSAILVision.py --SEED=2110
-../../anaconda3/bin/python3 101_CSAILVision.py --SEED=2111
-../../anaconda3/bin/python3 101_CSAILVision.py --SEED=2112
-../../anaconda3/bin/python3 101_CSAILVision.py --SEED=2113
-../../anaconda3/bin/python3 101_CSAILVision.py --SEED=2114
+#../../anaconda3/bin/python3 104_deeplabv3plus_with_clf.py --SEED=2140
+#../../anaconda3/bin/python3 104_deeplabv3plus_with_clf.py --SEED=2141
+#../../anaconda3/bin/python3 104_deeplabv3plus_with_clf.py --SEED=2142
+../../anaconda3/bin/python3 104_deeplabv3plus_with_clf.py --SEED=2143
+../../anaconda3/bin/python3 104_deeplabv3plus_with_clf.py --SEED=2144
 
+
+#../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2124
+
+#../../anaconda3/bin/python3 101_CSAILVision.py --SEED=2110
 
 #../../anaconda3/bin/python3 106_pspnet.py --SEED=2094
 
 #../../anaconda3/bin/python3 103_resnet_unet.py --SEED=2062
-
-#../../anaconda3/bin/python3 104_deeplabv3plus_with_clf.py --SEED=2051
-
 
 #../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2052
 #../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2053

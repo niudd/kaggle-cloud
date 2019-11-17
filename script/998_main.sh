@@ -1,8 +1,13 @@
-#../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2100
-../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2101
-../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2102
-../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2103
-../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2104
+../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2150
+../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2151
+../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2152
+../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2153
+../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2154
+
+
+#../../anaconda3/bin/python3 106_pspnet.py --SEED=2134
+
+#../../anaconda3/bin/python3 102_resnet_fpn.py --SEED=2104
 
 #../../anaconda3/bin/python3 103_resnet_unet.py --SEED=2084
 
